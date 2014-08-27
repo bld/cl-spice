@@ -8,7 +8,8 @@
 (in-package :cl-spice)
 
 (define-foreign-library libcspice
-  (t (:default "lib/cspice")))
+  (:unix (:or "lib/libcspice.so.6.5" "lib/libcspice.so.6"))
+  (t (:default "lib/libcspice")))
 
 (use-foreign-library libcspice)
 
