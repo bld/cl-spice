@@ -8,7 +8,7 @@
 (in-package :cl-spice)
 
 (define-foreign-library libcspice
-  (t (:default "cspice")))
+  (t (:default "lib/cspice")))
 
 (use-foreign-library libcspice)
 
@@ -136,3 +136,23 @@ http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/str2et_c.html"
 
 ;;; Positions of spacecraft & natural bodies
 
+(defcfun ("spkezr_c" spkezr) :void
+  (targ :string)
+  (et :double)
+  (ref :string)
+  (abcorr :string)
+  (obs :string)
+  (starg :pointer)
+  (lt :pointer))
+
+(defun spk-ezr (target epht observer &key (ref :j2000) (abcorr :none))
+  "State of target at ephemeris time relative to observer in specified
+reference frame & optionally with aberration correction"
+  (with-foreign-objects ((target-state :double 6)
+			 (light-time :double))
+    (spkezr (string target) epht (string ref) (string abcorr) (string observer) target-state light-time)
+    (values
+     (let ((ts-v (make-array 6 :element-type 'double-float)))
+       (dotimes (i 6) (setf (aref ts-v i) (mem-aref target-state :double i)))
+       ts-v)
+     (mem-ref light-time :double))))
