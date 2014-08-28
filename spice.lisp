@@ -1,7 +1,5 @@
 ;;; Foreign function interface to JPL's SPICE library
 
-(ql:quickload :cffi)
-
 (defpackage :cl-spice
   (:use :cl :cffi))
 
@@ -40,7 +38,7 @@
 (defcfun ("kdata_c" kdata) :void
   ;; Input
   (which :int)
-  (kind :pointer)
+  (kind :string)
   (fillen :int)
   (typlen :int)
   (srclen :int)
@@ -53,24 +51,23 @@
 
 (defun kernel-data (which &key (kind :all) (fillen 128) (typlen 32) (srclen 128))
   "Data on the nth kernel"
-  (with-foreign-string (kind-str (string kind))
-    (with-foreign-objects
-	((file :char fillen)
-	 (filtyp :char typlen)
-	 (source :char srclen)
-	 (handle :int)
-	 (found :int))
-      (kdata which kind-str fillen typlen srclen file filtyp source handle found)
-      (values
-       (convert-from-foreign file :string)
-       (convert-from-foreign filtyp :string)
-       (convert-from-foreign source :string)
-       (mem-ref handle :int)
-       (mem-ref found :int)))))
+  (with-foreign-objects
+      ((file :char fillen)
+       (filtyp :char typlen)
+       (source :char srclen)
+       (handle :int)
+       (found :int))
+    (kdata which (string kind) fillen typlen srclen file filtyp source handle found)
+    (values
+     (convert-from-foreign file :string)
+     (convert-from-foreign filtyp :string)
+     (convert-from-foreign source :string)
+     (mem-ref handle :int)
+     (mem-ref found :int))))
 
 (defcfun ("kinfo_c" kinfo) :void
   ;; Input
-  (file :pointer)
+  (file :string)
   (typlen :int)
   (srclen :int)
   ;; Output
@@ -81,18 +78,17 @@
 
 (defun kernel-info (file &key (typlen 32) (srclen 128))
   "Retrieve info of specified loaded kernel file"
-  (with-foreign-string (file-str file)
-    (with-foreign-objects
-	((filtyp :char typlen)
-	 (source :char srclen)
-	 (handle :int)
-	 (found :int))
-      (kinfo file-str typlen srclen filtyp source handle found)
-      (values
-       (convert-from-foreign filtyp :string)
-       (convert-from-foreign source :string)
-       (mem-ref handle :int)
-       (not (zerop (mem-ref found :int)))))))
+  (with-foreign-objects
+      ((filtyp :char typlen)
+       (source :char srclen)
+       (handle :int)
+       (found :int))
+    (kinfo file typlen srclen filtyp source handle found)
+    (values
+     (convert-from-foreign filtyp :string)
+     (convert-from-foreign source :string)
+     (mem-ref handle :int)
+     (not (zerop (mem-ref found :int))))))
 
 (defmacro with-kernel (filename &body body)
   "Execute forms that require a loaded ephemeris forms using the given
