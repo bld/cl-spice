@@ -218,6 +218,7 @@ reference frame & optionally with aberration correction"
   (with-foreign-objects ((target-position :double 3)
 			 (light-time :double))
     (spkpos (string-upcase target) epht (string-upcase ref) (string-upcase abcorr) (string-upcase observer) target-position light-time)
+    (assert (not (failed)))
     (values
      (to-lisp-vector target-position :double 3)
      (mem-ref light-time :double))))
