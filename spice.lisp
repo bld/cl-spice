@@ -6,6 +6,7 @@
 	   furnsh unload kernel-total kernel-data kernel-info with-kernel
 	   string-to-ephemeris-time ephemeris-time-to-output
 	   spk-ezr
+	   spk-pos
 	   body-vrd))
 
 (in-package :cl-spice)
@@ -200,6 +201,25 @@ reference frame & optionally with aberration correction"
     (assert (not (failed)))
     (values
      (to-lisp-vector target-state :double 6)
+     (mem-ref light-time :double))))
+
+(defcfun ("spkpos_c" spkpos) :void
+  ;; Input
+  (targ :string)
+  (et :double)
+  (ref :string)
+  (abcorr :string)
+  (obs :string)
+  ;; Output
+  (ptarg :pointer)
+  (lt :pointer))
+
+(defun spk-pos (target epht observer &key (ref :j2000) (abcorr :none))
+  (with-foreign-objects ((target-position :double 3)
+			 (light-time :double))
+    (spkpos (string-upcase target) epht (string-upcase ref) (string-upcase abcorr) (string-upcase observer) target-position light-time)
+    (values
+     (to-lisp-vector target-position :double 3)
      (mem-ref light-time :double))))
 
 ;;; Planetary constants
