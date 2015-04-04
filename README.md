@@ -1,7 +1,8 @@
 cl-spice
 ========
 
-Common Lisp interface to JPL's SPICE toolkit using CFFI
+Common Lisp interface to JPL's SPICE toolkit for accessing orbit and
+other information on celestial bodies and spacecraft.
 
 * [cl-spice](https://github.com/bld/cl-spice)
 * [SPICE](http://naif.jpl.nasa.gov/naif/index.html)
