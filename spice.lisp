@@ -2,12 +2,19 @@
 
 (defpackage :cl-spice
   (:use :cl :cffi :alexandria)
-  (:export error-action failed reset
-	   furnsh unload kernel-total kernel-data kernel-info with-kernel
-	   string-to-ephemeris-time ephemeris-time-to-output
-	   spk-ezr
-	   spk-pos
-	   body-vrd))
+  (:export
+   ;; Error handling
+   error-action failed reset
+   ;; Kernel management
+   furnsh unload kernel-total kernel-data kernel-info kernelp with-kernel with-kernels
+   ;; Time & date
+   string-to-ephemeris-time ephemeris-time-to-output ephemeris-time-to-utc delta-et j2000-jd unit-time seconds-per-day
+   ;; Time systems for 'unit-time' conversion
+   tai tdb tdt et jdtdb jdtdt jed
+   ;; Ephemeris
+   spk-ezr spk-pos
+   ;; Physical data
+   body-vrd))
 
 (in-package :cl-spice)
 
@@ -141,6 +148,10 @@ OPERATION - One of :set or :get. :get requires no other arguments. It returns th
      (mem-ref handle :int)
      (not (zerop (mem-ref found :int))))))
 
+(defun kernelp (filename)
+  "Test if kernel filename already loaded"
+  (nth-value 3 (kernel-info filename)))
+
 (defmacro with-kernel (filename &body body)
   "Execute forms that require a loaded ephemeris forms using the given
 filename. Calls FURNSH and UNLOAD, and returns the result of the body."
@@ -151,10 +162,37 @@ filename. Calls FURNSH and UNLOAD, and returns the result of the body."
 	    (progn
 	      (unless ,found (furnsh ,filename)) ; furnish if not already loaded
 	      (let ((,retval (multiple-value-list (progn ,@body)))) ; handle multiple values
-		(unload ,filename) ; unload if it wasn't loaded already
+		(unless ,found (unload ,filename)) ; unload newly loaded kernel
 		(apply #'values ,retval))) ; return multiple values if present
 	 ;; make sure kernel unloads at the end if it wasn't before
 	 (unless ,found (unload ,filename))))))
+
+;;; Use multiple kernels
+(defmacro with-kernels (filenames &body body &aux (n (length filenames)))
+  (let ((retval (gensym))
+	(founds (loop repeat n collect (gensym))))
+    ;; Test if each kernel filename is loaded and assign to found variables
+    `(let ,(loop for found in founds
+	      for filename in filenames
+	      collect `(,found (nth-value 3 (kernel-info ,filename))))
+       (unwind-protect
+	    (progn
+	      ;; For each kernel not found, load it with FURNSH
+	      ,@(loop for found in founds
+		   for filename in filenames
+		   collect `(unless ,found (furnsh ,filename)))
+	      ;; Run body forms, handling multiple values
+	      (let ((,retval (multiple-value-list (progn ,@body))))
+		;; Unload kernels if not already
+		,@(loop for filename in filenames
+		     for found in founds
+		     collect `(unless ,found (unload ,filename)))
+		;; Return multiple values
+		(apply #'values ,retval)))
+	 ;; Make sure newly loaded kernels unload if body fails
+	 ,@(loop for found in founds
+	      for filename in filenames
+	      collect `(unless ,found (unload ,filename)))))))
 
 ;;; Time & date
 
@@ -179,16 +217,61 @@ http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/str2et_c.html"
 (defun ephemeris-time-to-output (et &key (picture "YYYY Mon DD, HR:MN:SC ::UTC") (lenout 128))
   (with-foreign-object (output :char lenout)
     (timout et picture lenout output)
+    (assert (not (failed)))
     (convert-from-foreign output :string)))
+
+(defcfun ("et2utc_c" et2utc) :void
+  ;; Input
+  (et :double)
+  (format :string)
+  (prec :int)
+  (lenout :int)
+  ;; Output
+  (utcstr :string))
+
+(defun ephemeris-time-to-utc (et &key (format "C") (prec 3) (lenout 25))
+  (with-foreign-object (utcstr :char lenout)
+    (et2utc et (string-upcase format) prec lenout utcstr)
+    (assert (not (failed)))
+    (convert-from-foreign utcstr :string)))
+
+(defcfun ("deltet_c" deltet) :void
+  ;; Input
+  (epoch :double)
+  (eptype :string)
+  ;; Output
+  (delta (:pointer :double)))
+
+(defun delta-et (epoch &key (eptype "UTC"))
+  (with-foreign-object (delta :double)
+    (deltet epoch (string-upcase eptype) delta)
+    (assert (not (failed)))
+    (mem-ref delta :double)))
+
+(defcfun ("j2000_c" j2000-jd) :double)  
+
+(defcfun ("unitim_c" unitim) :double
+  ;; Input
+  (epoch :double)
+  (insys :string)
+  (outsys :string))
+
+(defun unit-time (epoch in-system out-system)
+  "Convert numeric time units given epoch, input system, and output system. Require LSK loaded."
+  (unitim epoch (string-upcase in-system) (string-upcase out-system)))
+
+(defcfun ("spd_c" seconds-per-day) :double)
 
 ;;; Positions of spacecraft & natural bodies
 
 (defcfun ("spkezr_c" spkezr) :void
+  ;; Input
   (targ :string)
   (et :double)
   (ref :string)
   (abcorr :string)
   (obs :string)
+  ;; Output
   (starg :pointer)
   (lt :pointer))
 
