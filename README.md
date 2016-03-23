@@ -33,7 +33,29 @@ subdirectory of the CSPICE code.
 
 ### Windows
 
-TBD
+Here is how I was able to compile a .DLL of CSPICE for Windows.
+* Download C++ compiler, MS Visual Studio Community 2015
+  - https://www.visualstudio.com/ "Download Community 2015"
+* Install Visual Studio 2015
+  - Custom installation -> Select additional compilers -> C++
+* Download the C version of SPICE for "Windows, MS Visual C"
+  (cspice.zip) in either 32 or 64 bit, depending on your version of
+  Lisp. Unpack the archive where you want to compile it.
+* Copy "cspice/mkprodct_dll.bat" and "cspice/cspice.def" into the
+  "src/cspice" sub-directory of the CSPICE code.
+* Run the command line environment for compiling
+  - Start
+	  -> All Programs
+		  -> Visual Studio 2015
+			  -> Visual Studio Tools
+				  -> Windows Desktop Command Prompts
+					  -> VS2015 x64 Native Tools Command Prompt (for 64 bit)
+					  -> VS2015 x64 Native Tools Command Prompt (for 32 bit)
+* "cd" to the directory where you unpacked cspice.zip, and the
+  "src/cspice" sub-directory.
+* Run "mkprodct_dll.bat" to compile, which will create the "cspice.dll" file.
+* Copy "cspice.dll" to the location needed. For CL-SPICE, this is the
+  "lib" subdirectory.
 
 Getting SPICE kernels
 ---------------------
