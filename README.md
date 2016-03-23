@@ -55,7 +55,8 @@ Here is how I was able to compile a .DLL of CSPICE for Windows.
   "src/cspice" sub-directory.
 * Run "mkprodct_dll.bat" to compile, which will create the "cspice.dll" file.
 * Copy "cspice.dll" to the location needed. For CL-SPICE, this is the
-  "lib" subdirectory.
+  "lib" subdirectory. 
+* Rename "cspice.dll" to "libcspice.dll" for correct calling by CL-SPICE.
 
 Getting SPICE kernels
 ---------------------
