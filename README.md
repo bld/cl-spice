@@ -45,12 +45,12 @@ Here is how I was able to compile a .DLL of CSPICE for Windows.
   "src/cspice" sub-directory of the CSPICE code.
 * Run the command line environment for compiling
   - Start
-	  -> All Programs
-		  -> Visual Studio 2015
-			  -> Visual Studio Tools
-				  -> Windows Desktop Command Prompts
-					  -> VS2015 x64 Native Tools Command Prompt (for 64 bit)
-					  -> VS2015 x64 Native Tools Command Prompt (for 32 bit)
+    - All Programs
+      - Visual Studio 2015
+        - Visual Studio Tools
+          - Windows Desktop Command Prompts
+            - VS2015 x64 Native Tools Command Prompt (for 64 bit)
+            - VS2015 x64 Native Tools Command Prompt (for 32 bit)
 * "cd" to the directory where you unpacked cspice.zip, and the
   "src/cspice" sub-directory.
 * Run "mkprodct_dll.bat" to compile, which will create the "cspice.dll" file.
