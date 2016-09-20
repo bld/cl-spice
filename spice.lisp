@@ -14,7 +14,9 @@
    ;; Ephemeris
    spk-ezr spk-pos
    ;; Physical data
-   body-vrd))
+   body-vrd
+   ;; Frame transformation
+   px-form))
 
 (in-package :cl-spice)
 
@@ -324,3 +326,20 @@ reference frame & optionally with aberration correction"
     (assert (not (failed)))
     (values (to-lisp-vector values :double maxn) (mem-ref dim :int))))
 
+;; Reference frame conversion
+
+(defcfun ("pxform_c" pxform) :void
+  ;; Inputs
+  (from :string)
+  (to :string)
+  (et :double)
+  ;; Output
+  (rotate :pointer))
+
+(defun px-form (from to &optional (et 0d0))
+  (with-foreign-object (rot :double 9)
+    (pxform (string-upcase from) (string-upcase to) et rot)
+    (let ((m (make-array '(3 3) :element-type 'double)))
+      (dotimes (i 9)
+	(setf (row-major-aref m i) (mem-aref rot :double i)))
+      m)))
