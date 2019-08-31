@@ -293,7 +293,7 @@ endif
 #
 if ( $status == 0) then
 
-    $TKCOMPILER -shared -Wl,-soname,libcspice.so.6 -o libcspice.so.6.5 *.o $TKLINKOPTIONS
+    $TKCOMPILER -shared -Wl,-soname,libcspice.so.6 -o ../../lib/libcspice.so.6.5 *.o $TKLINKOPTIONS
 
 endif
 	
