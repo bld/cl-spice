@@ -134,7 +134,7 @@ function. Optionally use :KIND key to specify what kind of kernel
 [C documentation for a list of kernel kinds](http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ktotal_c.html). Usage:
 
 	(kernel-total)
-	(kernel-total :kind :spk)
+	(kernel-total :spk)
 
 * [KTOTAL_C documentation](http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/ktotal_c.html)
 
